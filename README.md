@@ -1,2 +1,5 @@
 # minesweeperGUI
-GUI version of minesweeper created during sophomore year. 
+
+GUI version of minesweeper created during sophomore year.
+
+-- More Coming Soon --
