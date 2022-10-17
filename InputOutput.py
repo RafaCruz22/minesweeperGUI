@@ -20,29 +20,29 @@ class InputOutput:
         self.master.title("Minesweeper")
         self.master.resizable(False, False)
 
-        # ----  Main Frame  -----------------------------------------------------------------------------------------------------------------------
+        # ----  Main Frame  ------------------------------------
         self.mainFrame = LabelFrame(self.master)
         self.mainFrame.grid()
 
-        # ----  Game Information Bar Frame  -------------------------------------------------------------------------------------------------------
+        # ----  Game Information Bar Frame  ---------------------
         self.barWidth = (width * 52)
         self.barHeight = (height * 8.6)
         self.barFrame = Frame(self.mainFrame, width=self.barWidth,
                               height=self.barHeight, relief=RIDGE, borderwidth=6, bg='gray30')
         self.barFrame.grid(padx=10, pady=10)
 
-        # ----  Board Game Frame  -----------------------------------------------------------------------------------------------------------------
+        # ----  Board Game Frame  ---------------------------------
         self.boardWidth = self.boardHeight = (width * 50)
         self.boardFrame = Frame(self.mainFrame, width=self.boardWidth,
                                 height=self.boardHeight, relief=RIDGE, borderwidth=6, bg='gray30')
         self.boardFrame.grid(padx=10, pady=10)
 
-        # ----  Create A Canvas For The Board  ----------------------------------------------------------------------------------------------------
+        # ----  Create A Canvas For The Board  ---------------------
         self.board = Canvas(
             self.boardFrame, width=self.boardWidth, height=self.boardHeight)
         self.board.grid()
 
-        # ----  Variable To Return To Game Function  ----------------------------------------------------------------------------------------------
+        # ----  Variable To Return To Game Function  ----------------
         self.value = StringVar(self.master)  # adjanacey value of box clicked
         # number of mines marked initialized to numOfMines
         self.markedMines = StringVar(self.barFrame)
@@ -120,7 +120,7 @@ class InputOutput:
         button to quit game, and label to keep track of time 
         post: draws bar on self.master"""
 
-        # -----  Mine Marked Counter --------------------------------------------------------------------------
+        # -----  Mine Marked Counter ----------------------------------------
         # creates marked mine label
         mineMarkedCount = Label(self.barFrame, height=4,
                                 textvariable=self.markedMines)
@@ -200,7 +200,7 @@ class InputOutput:
             2. visible box or not (mine not visible), 
             3. is box is locked or not """
 
-        # ---  Creates the lines for the board   --------------------------------------------------------------
+        # ---  Creates the lines for the board   -------------------------------------
         # creates harizonal lines on self.board
         for x in range(0, self.boardWidth, 50):
             self.board.create_line(
@@ -211,7 +211,7 @@ class InputOutput:
             self.board.create_line(0, y, self.boardWidth,
                                    y, fill='black', width=2)
 
-        # ---  Places The Adjacency Values On The Board   --------------------------------------------------------------
+        # ---  Places The Adjacency Values On The Board   -----------------------------
         # places adjacency values in center of check cell box
         row = 0  # cell box row
         column = 0  # cell box column
@@ -239,7 +239,7 @@ class InputOutput:
             if row == self.size:  # row completed equal the size of board
                 row = 0  # reset row counter to 0 for new row
 
-        # ---  Creates The Cell Boxes -------------------------------------------------------------------------------
+        # ---  Creates The Cell Boxes ---------------------------------------------------
         columnDone = 0  # keeps track of how many coulmns have been created
         x1, x2 = 0, 50  # initial croods for creating cell box
         # true if columns created isn't equal to size of board
