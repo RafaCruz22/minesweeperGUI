@@ -27,22 +27,26 @@ class InputOutput:
         self.mainFrame.grid()
 
         # ----  Game Information Bar Frame  ----------------------
-        self.barWidth = (width * 52)
-        self.barHeight = (height * 8.6)
         self.barFrame = Frame(
             self.mainFrame,
-            width=self.barWidth,
-            height=self.barHeight,
+            width=(width * 52),
+            height=(height * 8.6),
             relief=RIDGE,
             borderwidth=6,
             bg='gray30')
+
         self.barFrame.grid(padx=10, pady=10)
 
         # -------  Quit Button  -----------------------------------
-        self.buttonImage = [PhotoImage(file="./assets/smile1.png"),
-                            PhotoImage(file="./assets/smile2.png"),
-                            PhotoImage(file="./assets/smile3.png"),
-                            PhotoImage(file="./assets/smile4.png")]
+        self.quitButton = Button(self.barFrame)
+
+        # -------  Images  ----------------------------------------
+        self.images = [PhotoImage(file="./assets/smile1.png"),
+                       PhotoImage(file="./assets/smile2.png"),
+                       PhotoImage(file="./assets/smile3.png"),
+                       PhotoImage(file="./assets/smile4.png"),
+                       PhotoImage(file="./assets/flag.png"),
+                       PhotoImage(file="./assets/mine.png")]
 
         # ----  Board Game Frame  ---------------------------------
         self.boardWidth = self.boardHeight = (width * 50)
@@ -53,6 +57,7 @@ class InputOutput:
             relief=RIDGE,
             borderwidth=6,
             bg='gray30')
+
         self.boardFrame.grid(padx=10, pady=10)
 
         # ----  Create A Canvas For The Board  ---------------------
@@ -60,14 +65,15 @@ class InputOutput:
             self.boardFrame,
             width=self.boardWidth,
             height=self.boardHeight)
+
         self.board.grid()
 
         # ----  Variable To Return To Game Function  ----------------
         self.value = StringVar(self.master)  # adjanacey value of box clicked
 
         # number of mines marked initialized to numOfMines
-        self.markedMines = StringVar(self.barFrame)
-        self.markedMines.set(0)
+        self.currentMines = StringVar(self.barFrame)
+        self.currentMines.set(self.mines)
 
         self.lockedList = []  # list of locked cell ids: list limited to number of mines in field
         self.lockedDict = dict()  # dictionary of "X" textId & locked cell ids (to remove "X")
@@ -79,7 +85,6 @@ class InputOutput:
     def intro(self):
         """ a separate introduction to the game window with instructions """
 
-        self.master.withdraw()  # keeps the game window from being drawn
         introWindow = Toplevel()  # new window for intro message
         introWindow.iconbitmap("./assets/favicon.ico")
 
@@ -88,23 +93,23 @@ class InputOutput:
 
         # string var object to set intro message
         introMessage = StringVar(introWindow)
-        introText = Message(introWindow, relief=RIDGE,
+        introText = Message(introWindow,
+                            relief=RIDGE,
                             textvariable=introMessage,
                             borderwidth=6,
                             bg='gray30',
                             fg='snow',
                             font=("New Time Roman", 15, "bold", "italic"))  # Message widage
 
-        startButton = Button(introWindow, relief=RIDGE,
-                             text="Start Game")  # button to start game
-        # handles the button being clicked
+        startButton = Button(
+            introWindow,
+            relief=RIDGE,
+            text="Start Game")  # button to start game
+
         startButton.bind(
             "<Button-1>", lambda event: self.startGame(introWindow))
 
-        # sets the messages to the string var assigned at start of function
         introMessage.set(self.introMessages())
-
-        # packs both widgets
         introText.pack()
         startButton.pack()
 
@@ -150,7 +155,7 @@ class InputOutput:
         # creates marked mine label
         mineMarkedCount = Label(
             self.barFrame,
-            textvariable=self.markedMines,
+            textvariable=self.currentMines,
             relief=SUNKEN,
             font=20)
 
@@ -158,10 +163,10 @@ class InputOutput:
 
         # -------  Starts Button With Standard Image   --------------------------------------------------------
         # creates quit button
-        self.quitButton = Button(self.barFrame, image=self.buttonImage[0])
+        self.quitButton['image'] = self.images[0]
         self.quitButton.place(relx=.43, rely=.15)
         self.quitButton.bind(
-            '<Button-1>', lambda event: self.quit(event, self.buttonImage[2]))
+            '<Button-1>', lambda event: self.quit(event, self.images[2]))
         # ^^ : binding event handle with button click to quit game
 
         # -------  Time Keeper  -------------------------------------------------------------------------------
@@ -189,7 +194,7 @@ class InputOutput:
         os.abort()
 
     def buttonImageToggle(self):
-        self.quitButton["image"] = self.buttonImage[0]
+        self.quitButton["image"] = self.images[0]
 
     def showBoard(self):
         """ creates the entire board, first lines horizontal then vertical lines, then
@@ -226,14 +231,12 @@ class InputOutput:
                 if mineOnField != '9':
                     self.mineField[row][column].visible = True
 
-                PhotoImage(file="./assets/rick.gif")
                 # creates the text objects and places them in center of each future box
                 if mineOnField == '9':
-                    # self.board.create_image(
-                    #     rowX, columnY, image=PhotoImage(file="./assets/mine.png"))
 
-                    self.board.create_text(rowX, columnY, text='boom', font=(
-                        "New Time Roman", 10, "italic"))
+                    self.board.create_image(
+                        rowX, columnY, image=self.images[5])
+
                 else:
                     self.board.create_text(rowX, columnY, text=mineOnField, font=(
                         "New Time Roman", 20, "italic"))
@@ -326,18 +329,18 @@ class InputOutput:
         boxx = self.board.find_closest(x, y)[0]
 
         # visual indicator that a cell has been clicked
-        self.quitButton["image"] = self.buttonImage[1]
+        self.quitButton["image"] = self.images[1]
 
         # makes sure user is clicking on a cellbox
         if boxx >= firstBox and boxx <= lastBox:
 
-            # checks if cellbox user cliked is in lockedList
+            # checks if cellbox user cliked is not in lockedList
             if boxx not in self.lockedList:
 
                 # assigns the cellbox click adjancey value to value
                 value = self.board.gettags(boxx)[1]
 
-                # sets self.value i.e currect value of cellboxed clicked
+                # sets self.value i.e currect value of cellbox clicked
                 self.value.set(value)
 
                 # removes clicked cell box from self.board (canvas)
@@ -354,103 +357,72 @@ class InputOutput:
         post: lock the cell and place X in the box """
 
         # allows for cell to be locked as long as the game hasn't ended
-        if self.gameEnd == False:
-            cellID = self.board.find_closest(
-                x, y)[0]  # user clicked cell box id
+        if not self.gameEnd:
+            cellID = self.board.find_closest(x, y)[0]
 
-            print(self.board.gettags(cellID))
-            # checks if id clicked is in list of created boxes
             if cellID >= firstBox and cellID <= lastBox:
+
                 # checks if clicked id is in list of locked boxes
-                # true as long as id is in locked list and self.minesMarked !> self.mines
-                if cellID not in self.lockedList and len(self.lockedList) != self.mines:
-                    # only places "X" if the cell box is a mine
-                    if self.board.gettags(cellID)[1] == "9":
-                        # displays an "X" on the cell box user wants locked
-                        # gets and splits the croods which is taged on each cell
-                        lockTextCroods = self.board.gettags(
-                            cellID)[-2].split(",")
+                if cellID not in self.lockedList:
+                    # gets and splits the croods which is taged on each cell
+                    cellCoordinatesX, cellCoordinatesY = self.board.gettags(
+                        cellID)[-2].split(",")
 
-                        textID = self.board.create_text(
-                            lockTextCroods[0],
-                            lockTextCroods[1],
-                            text="x",
-                            font=("New Time Roman", 50, "italic"),
-                            tags="x")
+                    # displays a flag on the cell box user wants locked
+                    textID = self.board.create_image(
+                        cellCoordinatesX,
+                        cellCoordinatesY,
+                        image=self.images[4])
 
-                        # print(lockTextCroods, "locked")
+                    # cell not in locked list so append to list
+                    self.lockedList.append(textID)
 
-                        # ss = PhotoImage(file="./assets/flag.png")
-                        # textID = self.board.create_image(
-                        #     lockTextCroods[0],
-                        #     lockTextCroods[1], image=ss)
+                    # self.lockedDict[f"{cellID}"] = textID
 
-                        # textID['image'] = PhotoImage(file="./assets/mine.png")
-                        # cell not in locked list so append to list
-                        self.lockedList.append(cellID)
-                        self.lockedDict[f"{cellID}"] = textID
+                    # decrease self.mineMarked by 1
+                    mineCount = int(self.currentMines.get())
+                    self.currentMines.set(str(mineCount - 1))
 
-                        # decrease self.mineMarked by 1
-                        newMineCount = str(int(self.markedMines.get()) + 1)
-
-                        # set value to self.markedMines
-                        self.markedMines.set(newMineCount)
-
-    def unlock(self, x, y, firstBox, lastBox):
+    def unlock(self, x, y):
         """ event handler for unlocking cell when double right clicked
         pre: mouse x croods , mouse y croods
         post: unlocks the cell and removes X  """
 
-        firstBox = self.board.find_withtag(
-            "boxes")[0]  # id of first box created
-        lastBox = self.board.find_withtag(
-            "boxes")[-1]  # id of last box created
-
         # game hasn't ended so allow unlocking of cell
-        if self.gameEnd == False:
+        if not self.gameEnd:
+            cellID = self.board.find_closest(x, y)[0]
+            if cellID in self.lockedList:
+                self.board.delete(cellID)
+                self.lockedList.remove(cellID)  # removes cell box
 
-            # if self.board.find_closest(x,y)
-            cellID = self.board.find_closest(
-                x, y)[0]  # user clicked cell box id
-
-            # checks if clicked id is in list of locked boxes
-            # true as long as id is in locked list and self.minesMarked !> self.mines
-            if cellID >= firstBox and cellID <= lastBox:
-                # if the clicked cell box is in cell box list
-                if cellID in self.lockedList:
-                    self.board.delete(self.lockedDict[f"{cellID}"])
-                    self.lockedList.remove(cellID)  # remove cell box
-                    # increase mine count by 1
-                    newMineCount = str(int(self.markedMines.get()) - 1)
-                    self.markedMines.set(newMineCount)  # changes mine count
+                # increase mine count by 1
+                newMineCount = str(int(self.currentMines.get()) + 1)
+                self.currentMines.set(newMineCount)  # changes mine count
 
     def getInput(self):
         """ get the input from the user;
         returns the coordinates and True (if a "keyboard" event, i.e. lock the cell, it is a potential bomb)
         otherwise False"""
 
+        # get's first and last cell box on board
         firstBox = self.board.find_withtag("boxes")[0]
         lastBox = self.board.find_withtag("boxes")[-1]
 
-        # click button 1 to show cell
-        # show cell binding
+        # left click to reveal cell
         self.board.bind(
             "<Button-1>",
             lambda event: self.showCell(event.x, event.y, firstBox, lastBox))
 
-        # click button 3 to lock cell
-        # locks cell binding
+        # right click to place flag on cell
         self.board.bind(
             "<Button-3>",
             lambda event: self.lock(event.x, event.y, firstBox, lastBox))
 
-        # double click button 3 to unlock cell
-        # unlock cell binding
+        # double right click to remove flag
         self.board.bind(
             "<Double-Button-3>",
-            lambda event: self.unlock(event.x, event.y, firstBox, lastBox))
+            lambda event: self.unlock(event.x, event.y))
 
-        # waits for cell value to be updated (Call to self.showCell(mouse.x,mouse.y))
         # waits for user to click on a unlocked cell
         self.board.wait_variable(self.value)
 
