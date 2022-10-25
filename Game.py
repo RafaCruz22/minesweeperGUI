@@ -5,131 +5,118 @@ from random import randint
 
 class Game():
 
-  def __init__(self,size,NumOfMines):
-    """ 
+    def __init__(self, size, NumOfMines):
+        """ 
+        size is the width and height of the board;
+        NumOfMines is the number of the mines on the board;
+        limitation: number of mines must be less than half of all the possible slots in the field"""
 
-    size is the width and height of the board;
-    NumOfMines is the number of the mines on the board;
-    limitation: number of mines must be less than half of all the possible slots in the field"""
+        assert NumOfMines < 0.5 * size * size
 
-    assert NumOfMines < 0.5 * size * size
+        self.field = [[Cell() for j in range(size)] for i in range(size)]
 
-    self.field = [ [ Cell() for j in range(size) ] for i in range(size)]
+        self.numOfmines = NumOfMines
+        self.mineList = []
 
-    self.numOfmines = NumOfMines
-    self.mineList = []
+        self.minesMarked = 0
+        # the places that we marked as potential mine
+        # the counter will be insreased only if the "marked mine" corresponds to the real bomb
 
-    self.minesMarked = 0
-    # the places that we marked as potential mine
-    # the counter will be insreased only if the "marked mine" corresponds to the real bomb
+        # generate the mines, put them into random places
+        k = 0
+        counter = 0
+        while counter < self.numOfmines:
 
-    # generate the mines, put them into random places
-    k = 0
-    counter = 0
-    while counter < self.numOfmines:
-      
-      x = randint(0,size-1)
-      y = randint(0,size-1)
+            x = randint(0, size-1)
+            y = randint(0, size-1)
 
-      if self.field[x][y] == '0':
-        self.field[x][y].putMine() # put the mine
-        counter +=1 # increase the counter for the mines
+            if self.field[x][y] == '0':
+                self.field[x][y].putMine()  # put the mine
+                counter += 1  # increase the counter for the mines
 
-        # adjust the numbers of the neighboring slots
-        self.adjustCounters(x,y)
+                # adjust the numbers of the neighboring slots
+                self.adjustCounters(x, y)
 
-    # initialize input and output
-    # I decided to have it in one instance, because of the graphics window
-    # it will not be a lot of functions, so we can keep it as one class
+        # initialize input and output
+        # I decided to have it in one instance, because of the graphics window
+        # it will not be a lot of functions, so we can keep it as one class
 
-    width = size 
-    height = size
+        width = size
+        height = size
 
-    self.out = InputOutput(self.field, self.numOfmines, width, height)
-    self.out.intro()
+        self.out = InputOutput(self.field, self.numOfmines, width, height)
+        self.out.intro()
 
-    # Question: what is more efficient?
-    # 1) to adjust the neighbors with counters while placing the bombs
-    # 2) to run through the entire field, calculate the counters later on
+    def adjustCounters(self, x, y):
 
-    # In my opinion: 1) is more efficient if the #of bombs is relatively small (1/4 of all possible slots?)
+        n = len(self.field)
 
-  def adjustCounters(self,x,y):
+        if x > 0:
 
-    # ord('0') = 48, ord('9') = 57,
-    # so if I, for example, need to increase 0 to 1, and to convert it back to char, I will do:
-    # chr(ord('0')+1)
+            # slot to the left
+            self.field[x-1][y].increment()
 
-    # other option, it to do str(int('0')+1)
+            if y > 0:  # slot to the left top
+                self.field[x-1][y-1].increment()
 
-    n = len(self.field)
+            if y < n-1:  # slot to the left bottom
+                self.field[x-1][y+1].increment()
 
-    if x > 0:
+        if y > 0:  # slot above
+            self.field[x][y-1].increment()
 
-      # slot to the left
-      self.field[x-1][y].increment()
+        if y < n-1:  # slot below
+            self.field[x][y+1].increment()
 
-      if y > 0: # slot to the left top
-        self.field[x-1][y-1].increment()
+        if x < n-1:
 
-      if y < n-1: # slot to the left bottom
-        self.field[x-1][y+1].increment()
+            # slot to the right
+            self.field[x+1][y].increment()
 
-    if y > 0: # slot above
-      self.field[x][y-1].increment()
+            if y > 0:  # slot to the right top
+                self.field[x+1][y-1].increment()
 
-    if y < n-1: # slot below
-      self.field[x][y+1].increment()
+            if y < n-1:  # slot to the right bottom
+                self.field[x+1][y+1].increment()
 
-    if x < n-1:
+    def playGame(self):
+        """ runs one game """
 
-      # slot to the right
-      self.field[x+1][y].increment()
+        goodToContinue = True
 
-      if y > 0: # slot to the right top
-        self.field[x+1][y-1].increment()
+        self.out.infoBar()  # shows the information bar
+        self.out.showBoard()  # show the current board
 
-      if y < n-1: # slot to the right bottom
-        self.field[x+1][y+1].increment()
+        while goodToContinue:
 
-  def playGame(self):
-    """ runs one game """
+            result = self.playRound()  # play a round, get its result
 
-    goodToContinue = True
+            if result == False:  # we opened a bomb!
+                self.out.announce(None)  # popup window with message of defeat
+                self.out.showFullBoard()  # show rest of board with locked mine cells
+                goodToContinue = False    # end game
 
-    self.out.infoBar() # shows the information bar 
-    self.out.showBoard() # show the current board
+            else:
+                self.minesMarked = int(self.out.markedMines.get())
+                if self.minesMarked == self.numOfmines:  # all bombs found!
+                    self.out.showFullBoard()  # show full board with mines locked
+                    # popup window with message of victory
+                    self.out.announce('player')
 
-    while goodToContinue:
-      
-      result = self.playRound() # play a round, get its result
-    
-      if result == False: # we opened a bomb!
-        self.out.announceDefeat() # popup window with message of defeat 
-        self.out.showFullBoard()  # show rest of board with locked mine cells
-        goodToContinue = False    # end game
+                else:  # not all mines found so far, continue playing
+                    pass
 
-      else:
-        self.minesMarked = int(self.out.markedMines.get())
-        if self.minesMarked == self.numOfmines: # all bombs found!
-          self.out.showFullBoard() # show full board with mines locked
-          self.out.announceWin()   # popup window with message of victory
+        # waits for window event to happen
+        self.out.board.wait_visibility(window=self.out.board)
 
-        else: # not all mines found so far, continue playing
-          pass
+    def playRound(self):
+        """ plays one round of the game, i.e. takes the input from the user,
+        checks what happens, returns whether the game can be continued, or it is the end of the game """
 
-    self.out.board.wait_visibility(window=self.out.board) # waits for window event to happen 
-      
-  def playRound(self):
-    """ plays one round of the game, i.e. takes the input from the user,
-    checks what happens, returns whether the game can be continued, or it is the end of the game """
-    
-    mineOrNoMine = self.out.getInput() # either adjancey value or mine
-    
-    # its a mine so end game 
-    if mineOrNoMine == '9':
-      return False 
-    else: # not a mine continue game
-      return True
+        mineOrNoMine = self.out.getInput()  # either adjancey value or mine
 
- 
+        # its a mine so end game
+        if mineOrNoMine == '9':
+            return False
+        else:  # not a mine continue game
+            return True
