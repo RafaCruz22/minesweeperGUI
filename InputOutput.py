@@ -21,6 +21,7 @@ class InputOutput:
         self.master.title("Minesweeper")
         self.master.iconbitmap("./assets/favicon.ico")
         self.master.resizable(False, False)
+        self.master.withdraw()
 
         # ----  Main Frame  --------------------------------------
         self.mainFrame = LabelFrame(self.master)
@@ -75,8 +76,7 @@ class InputOutput:
         self.currentMines = StringVar(self.barFrame)
         self.currentMines.set(self.mines)
 
-        self.lockedList = []  # list of locked cell ids: list limited to number of mines in field
-        self.lockedDict = dict()  # dictionary of "X" textId & locked cell ids (to remove "X")
+        self.lockedList = []  # list of locked cell ids
 
         # keeps track of seconds passed
         self.startTimer = StringVar(self.barFrame)
@@ -143,13 +143,13 @@ class InputOutput:
 
     def startGame(self, introWindow):
         """ starts the game """
-        self.master.deiconify()  # draws the minesweeper game window
         introWindow.destroy()   # destories the intro window
+        self.master.deiconify()
 
     def infoBar(self):
         """ creates an bar containing the games information, ex. Label for mines marked,
         button to quit game, and label to keep track of time
-        post: draws bar on self.master"""
+        post: draws information bar on self.master"""
 
         # -----  Mine Marked Counter ----------------------------------------
         # creates marked mine label
@@ -179,30 +179,14 @@ class InputOutput:
 
         timeCount.place(relx=.877, rely=.3, relwidth=.1, relheight=.5)
 
-        self.printBoard()
+    def createBoard(self):
+        """ creates the entire board """
+        self.drawLines()
+        self.placeAdjacency()
+        self.createCellBox()
 
-    def quit(self, event, image):
-        """ handles bar button being clicked
-        pre: "<Button-1>", the image to display
-        post: destory's self.master ending game after five milliseconds """
-
-        event.widget["image"] = image   # displays the image in button
-        event.widget.update()
-
-        # waiting a five seconds before destorying windows
-        event.widget.after(5000)
-        os.abort()
-
-    def buttonImageToggle(self):
-        self.quitButton["image"] = self.images[0]
-
-    def showBoard(self):
-        """ creates the entire board, first lines horizontal then vertical lines, then
-            place adjacency value in center of each box, finally creates the cell boxes
-            top left (x1,y1) & bottom right (x2,y2) tagging each object created with:
-            1. adjacency vlaue,
-            2. visible box or not (mine not visible),
-            3. is box is locked or not """
+    def drawLines(self):
+        """creates harizonal and vertical line on the canvas"""
 
         # ---  Creates the lines for the board   -------------------------------------
         # creates harizonal lines on self.board
@@ -215,6 +199,8 @@ class InputOutput:
             self.board.create_line(0, y, self.boardWidth,
                                    y, fill='black', width=2)
 
+    def placeAdjacency(self):
+        """ Places adjacency values on the canvas """
         # ---  Places The Adjacency Values On The Board   -----------------------------
         # places adjacency values in center of check cell box
         row = 0  # cell box row
@@ -229,10 +215,12 @@ class InputOutput:
 
                 # if value is not '9' adjancey value then set self.visible to True
                 if mineOnField != '9':
-                    self.mineField[row][column].visible = True
+                    # print(self.mineField[row][column].visible, "vis")
+                    self.mineField[row][column].visible = False
 
                 # creates the text objects and places them in center of each future box
                 if mineOnField == '9':
+                    self.mineField[row][column].visible = True
 
                     self.board.create_image(
                         rowX, columnY, image=self.images[5])
@@ -249,6 +237,7 @@ class InputOutput:
             if row == self.size:
                 row = 0
 
+    def createCellBox(self):
         # ---  Creates The Cell Boxes ---------------------------------------------------
         columnDone = 0  # keeps track of how many coulmns have been created
         x1, x2 = 0, 50  # initial croods for creating cell box
@@ -271,9 +260,9 @@ class InputOutput:
                 self.board.addtag_withtag(
                     f"{self.mineField[columnDone][rowDone]}", id)
 
-                # tags each box not a non-mine as visible
-                self.board.addtag_withtag(
-                    f"{self.mineField[columnDone][rowDone].isVisible()}", id)
+                if self.mineField[columnDone][rowDone].isVisible():
+                    # tags each box not a non-mine as visible
+                    self.board.addtag_withtag("mine", id)
 
                 # tags each cell box with its lock status at creation
                 self.board.addtag_withtag(
@@ -287,38 +276,11 @@ class InputOutput:
                 y2 += 50  # y2 to next column point
 
                 rowDone += 1
-
             # moves top left points of square which makes up the box to next point
             x1 += 50
             x2 += 50
 
             columnDone += 1
-
-    def announce(self, winner):
-        """ announces whether the player has won or lost """
-
-        window = Toplevel()  # new window for winner message
-        window.iconbitmap("./assets/favicon.ico")
-        window.resizable(False, False)
-
-        msg = StringVar(window)
-
-        message = Label(window,
-                        relief=RIDGE,
-                        textvariable=msg,
-                        width=20,
-                        height=17,
-                        borderwidth=6,
-                        bg='gray30',
-                        font=("New Time Roman", 20, "bold", "italic"))  # Message widget
-
-        message.pack()  # packs to winner window
-
-        # sets the text to display in label
-        if winner == 'player':
-            msg.set("\n!! YOU HAVE WON !!" * 15)
-        else:
-            msg.set("\n!! YOU HAVE LOST !!" * 15)
 
     def showCell(self, x, y, firstBox, lastBox):
         """shows the cell with coordinates x and y
@@ -368,7 +330,7 @@ class InputOutput:
                     cellCoordinatesX, cellCoordinatesY = self.board.gettags(
                         cellID)[-2].split(",")
 
-                    # displays a flag on the cell box user wants locked
+                    # places a flag on cell user wants locked
                     textID = self.board.create_image(
                         cellCoordinatesX,
                         cellCoordinatesY,
@@ -381,7 +343,7 @@ class InputOutput:
 
                     # decrease self.mineMarked by 1
                     mineCount = int(self.currentMines.get())
-                    self.currentMines.set(str(mineCount - 1))
+                    self.currentMines.set(mineCount - 1)
 
     def unlock(self, x, y):
         """ event handler for unlocking cell when double right clicked
@@ -428,6 +390,62 @@ class InputOutput:
 
         return self.value.get()  # return True no mine, false if mine
 
+    def buttonImageToggle(self):
+        self.quitButton["image"] = self.images[0]
+
+    def announce(self, winner):
+        """ announces whether the player has won or lost """
+
+        window = Toplevel()  # new window for winner message
+        window.iconbitmap("./assets/favicon.ico")
+        window.resizable(False, False)
+
+        msg = StringVar(window)
+
+        message = Label(window,
+                        relief=RIDGE,
+                        textvariable=msg,
+                        width=10,
+                        height=5,
+                        borderwidth=6,
+                        bg='gray30',
+                        font=("New Time Roman", 20, "bold", "italic"))  # Message widget
+
+        message.pack()  # packs to winner window
+
+        # sets the text to display in label
+        if winner == 'player':
+            msg.set("Winner" +
+                    "\nWinner" +
+                    "\nWinner")
+        else:
+            msg.set("Try Again" +
+                    "\nTry Again" +
+                    "\nTry Again")
+
+    def quit(self, event, image):
+        """ handles bar button being clicked
+        pre: "<Button-1>", the image to display
+        post: destory's self.master ending game after two seconds"""
+
+        event.widget["image"] = image   # displays the image in button
+        event.widget.update()
+
+        # waiting a two seconds before destorying windows
+        event.widget.after(2000)
+        os.abort()
+
+    def showFullBoard(self):
+        # game has ended do not allow locking of cells
+        self.gameEnd = True
+
+        # disable clicking on boxes
+        self.board.unbind("<Button-1>")
+
+        # deletes all cells that are mines
+        for id in self.board.find_withtag("mine"):
+            self.board.delete(id)
+
     def printBoard(self):
         """ prints the board to the console"""
 
@@ -439,16 +457,3 @@ class InputOutput:
                 row += str(self.mineField[j][i]) + '  '
 
             print("\t", row)
-
-    def showFullBoard(self):
-        # game has ended do not allow locking of cells
-        self.gameEnd = True
-
-        # gameover so disable clicking on boxes
-        # boxes left are mines
-        self.board.unbind("<Button-1>")
-
-        # deletes all cell's that are not mines
-        boxList = self.board.find_withtag("True")
-        for id in boxList:
-            self.board.delete(id)
