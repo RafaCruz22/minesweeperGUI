@@ -88,6 +88,7 @@ class Engine():
 
             if not result:  # we opened a bomb!
                 self.out.announce("lost")  # window with defeat message
+                self.out.killTimer()
                 break  # end game
 
             else:
@@ -97,15 +98,15 @@ class Engine():
 
                 if self.minesMarked == self.numOfMines:  # all bombs found!
                     self.out.announce('player')  # window with victory message
+                    self.out.killTimer()
                     break  # end game
 
         self.out.showFullBoard()  # reveal all mine cells
 
-        # # waits for window event to happen
-        self.out.board.wait_window(window=self.out.board)
+        # # keeps main window from closing out
+        self.out.board.wait_window(window=self.out.master)
 
     def playRound(self) -> bool:
         """ plays one round
         post: returns False if user has not clicked on mine, True otherwise"""
-
         return False if self.out.getInput() == '9' else True
