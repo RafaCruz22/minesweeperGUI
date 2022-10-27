@@ -1,5 +1,4 @@
 from tkinter import *
-import time
 import os
 
 
@@ -21,6 +20,7 @@ class InputOutput:
         self.master.title("Minesweeper")
         self.master.iconbitmap("./assets/favicon.ico")
         self.master.resizable(False, False)
+        # self.master.iconify()
         self.master.withdraw()
 
         # ----  Main Frame  --------------------------------------
@@ -79,8 +79,10 @@ class InputOutput:
         self.lockedList = []  # list of locked cell ids
 
         # keeps track of seconds passed
-        self.startTimer = StringVar(self.barFrame)
-        self.startTimer.set(0)
+        self.timer = StringVar(self.barFrame)
+        self.timer.set(0)
+
+        self.after = None
 
     def intro(self):
         """ a separate introduction to the game window with instructions """
@@ -173,7 +175,7 @@ class InputOutput:
         # creates label for time elapse
         timeCount = Label(
             self.barFrame,
-            textvariable=self.startTimer,
+            textvariable=self.timer,
             relief=SUNKEN,
             font=20)
 
@@ -290,6 +292,11 @@ class InputOutput:
         # assigns id of box that user clicked on
         boxx = self.board.find_closest(x, y)[0]
 
+        # if str(self.timer.get()) == '0':
+        #     self.master.after(1000, self.startTimer)
+
+        self.startTimer()
+
         # visual indicator that a cell has been clicked
         self.quitButton["image"] = self.images[1]
 
@@ -321,6 +328,8 @@ class InputOutput:
         # allows for cell to be locked as long as the game hasn't ended
         if not self.gameEnd:
             cellID = self.board.find_closest(x, y)[0]
+
+            self.startTimer()
 
             if cellID >= firstBox and cellID <= lastBox:
 
@@ -386,6 +395,7 @@ class InputOutput:
             lambda event: self.unlock(event.x, event.y))
 
         # waits for user to click on a unlocked cell
+        # when window is closed, app get's stuck here waiting.
         self.board.wait_variable(self.value)
 
         return self.value.get()  # return True no mine, false if mine
@@ -431,11 +441,12 @@ class InputOutput:
         event.widget["image"] = image   # displays the image in button
         event.widget.update()
 
+        self.killTimer()
         # waiting a two seconds before destorying windows
-        event.widget.after(2000)
+        event.widget.after(5000)
         os.abort()
 
-    def showFullBoard(self):
+    def showFullBoard(self) -> None:
         # game has ended do not allow locking of cells
         self.gameEnd = True
 
@@ -446,7 +457,7 @@ class InputOutput:
         for id in self.board.find_withtag("mine"):
             self.board.delete(id)
 
-    def printBoard(self):
+    def printBoard(self) -> None:
         """ prints the board to the console"""
 
         # prints the boards to console
@@ -457,3 +468,18 @@ class InputOutput:
                 row += str(self.mineField[j][i]) + '  '
 
             print("\t", row)
+
+    def startTimer(self) -> None:
+        ''' starts game timer when user has clicked a cell or placed a flag'''
+        if str(self.timer.get()) == '0':
+            self.master.after(1000, self.increaseTimer)
+
+    def increaseTimer(self) -> None:
+        ''' increases timer 1 second every second once timer has started'''
+        seconds = (int(self.timer.get()) + 1)
+        self.timer.set(seconds)
+        self.after = self.master.after(1000, self.increaseTimer)
+
+    def killTimer(self) -> None:
+        '''stops the timer'''
+        self.master.after_cancel(self.after)
