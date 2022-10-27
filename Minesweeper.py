@@ -1,7 +1,7 @@
 import Engine as game
 
 
-def main():
+def main() -> None:
     mineSweeper = game.Engine(10, 10)
     mineSweeper.playGame()
 
