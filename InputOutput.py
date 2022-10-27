@@ -1,5 +1,6 @@
 from tkinter import *
 import os
+import tkinter
 
 
 class InputOutput:
@@ -82,7 +83,8 @@ class InputOutput:
         self.timer = StringVar(self.barFrame)
         self.timer.set(0)
 
-        self.after = None
+        # holds reference to .after() method
+        self.after_id = None
 
     def intro(self):
         """ a separate introduction to the game window with instructions """
@@ -329,8 +331,6 @@ class InputOutput:
         if not self.gameEnd:
             cellID = self.board.find_closest(x, y)[0]
 
-            self.startTimer()
-
             if cellID >= firstBox and cellID <= lastBox:
 
                 # checks if clicked id is in list of locked boxes
@@ -405,6 +405,7 @@ class InputOutput:
 
     def announce(self, winner):
         """ announces whether the player has won or lost """
+        self.killTimer()  # backup call incase it doesn't work in other places
 
         window = Toplevel()  # new window for winner message
         window.iconbitmap("./assets/favicon.ico")
@@ -433,7 +434,7 @@ class InputOutput:
                     "\nTry Again" +
                     "\nTry Again")
 
-    def quit(self, event, image):
+    def quit(self, event: EventType, image: tkinter.PhotoImage) -> None:
         """ handles bar button being clicked
         pre: "<Button-1>", the image to display
         post: destory's self.master ending game after two seconds"""
@@ -443,7 +444,7 @@ class InputOutput:
 
         self.killTimer()
         # waiting a two seconds before destorying windows
-        event.widget.after(5000)
+        event.widget.after(2000)
         os.abort()
 
     def showFullBoard(self) -> None:
@@ -472,14 +473,14 @@ class InputOutput:
     def startTimer(self) -> None:
         ''' starts game timer when user has clicked a cell or placed a flag'''
         if str(self.timer.get()) == '0':
-            self.master.after(1000, self.increaseTimer)
+            self.after_id = self.master.after(1, self.increaseTimer)
 
     def increaseTimer(self) -> None:
         ''' increases timer 1 second every second once timer has started'''
         seconds = (int(self.timer.get()) + 1)
         self.timer.set(seconds)
-        self.after = self.master.after(1000, self.increaseTimer)
+        self.after_id = self.master.after(1000, self.increaseTimer)
 
     def killTimer(self) -> None:
         '''stops the timer'''
-        self.master.after_cancel(self.after)
+        self.master.after_cancel(self.after_id)
