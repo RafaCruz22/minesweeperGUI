@@ -87,8 +87,8 @@ class Engine():
             result = self.playRound()  # play a round, get its result
 
             if not result:  # we opened a bomb!
-                self.out.announce("lost")  # window with defeat message
                 self.out.killTimer()
+                # self.out.announce("lost")  # window with defeat message
                 break  # end game
 
             else:
@@ -97,8 +97,8 @@ class Engine():
                     (int(self.out.currentMines.get()) - self.numOfMines))
 
                 if self.minesMarked == self.numOfMines:  # all bombs found!
-                    self.out.announce('player')  # window with victory message
                     self.out.killTimer()
+                    # self.out.announce('player')  # window with victory message
                     break  # end game
 
         self.out.showFullBoard()  # reveal all mine cells
