@@ -11,7 +11,7 @@ class Cell:
     # '8' stands for 8 bombs around
     # '9' stands for the bomb in this place
 
-    self.visible = False # if False, don't show the cell
+    self.visible  = False # if False, don't show the cell
     # otherwise, show it
  
     self.locked = False # we can mark a cell as a potential bomb to lock
