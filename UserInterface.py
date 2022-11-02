@@ -1,5 +1,5 @@
 from tkinter import *
-import os
+import platform
 import tkinter
 
 
@@ -16,6 +16,7 @@ class UserInterface:
         self.mines = numOfmines
         self.size = width
         self.gameEnd = False
+        self.os = platform.system() # gets the OS currently running
 
         # ----  Main Tkinter Frame  ------------------------------
         self.master = Tk()  # STARTS EVENT LOOP
@@ -443,7 +444,7 @@ class UserInterface:
         self.board.grid()
         self.createBoard()
         self.cellActive()
-        self.printBoard()
+        self.printBoard() # for testing 
 
     def cellActive(self) -> None:  
         #  left click to reveal cell
@@ -451,15 +452,27 @@ class UserInterface:
             "<Button-1>",
             lambda event: self.showCell(event.x, event.y, self.firstBox, self.lastBox))
 
-        # right click to place flag on cell
-        self.board.bind(
-            "<Button-3>",
-            lambda event: self.lock(event.x, event.y, self.firstBox, self.lastBox))
+        if self.os == "Darwin":
+            # right click to place flag on cell
+            self.board.bind(
+                "<Button-2>",
+                lambda event: self.lock(event.x, event.y, self.firstBox, self.lastBox))
 
-        # double right click to remove flag
-        self.board.bind(
-            "<Double-Button-3>",
-            lambda event: self.unlock(event.x, event.y))  
+            # double right click to remove flag
+            self.board.bind(
+                "<Double-Button-2>",
+                lambda event: self.unlock(event.x, event.y)) 
+        
+        elif self.os == "Windows": 
+            # right click to place flag on cell
+            self.board.bind(
+                "<Button-3>",
+                lambda event: self.lock(event.x, event.y, self.firstBox, self.lastBox))
+
+            # double right click to remove flag
+            self.board.bind(
+                "<Double-Button-3>",
+                lambda event: self.unlock(event.x, event.y)) 
     
     def cellDeactivate(self) -> None:
 
