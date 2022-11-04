@@ -1,6 +1,6 @@
 from tkinter import *
 import platform
-import tkinter
+
 
 
 class UserInterface:
@@ -17,6 +17,8 @@ class UserInterface:
         self.size = width
         self.gameEnd = False
         self.os = platform.system() # gets the OS currently running
+        self.topBound = []
+        self.bottomBound = []
 
         # ----  Main Tkinter Frame  ------------------------------
         self.master = Tk()  # STARTS EVENT LOOP
@@ -49,7 +51,8 @@ class UserInterface:
                        PhotoImage(file="./assets/smile3.png"),
                        PhotoImage(file="./assets/smile4.png"),
                        PhotoImage(file="./assets/flag.png"),
-                       PhotoImage(file="./assets/mine.png")]
+                       PhotoImage(file="./assets/mine.png"),
+                       PhotoImage(file="./assets/box.png")]
 
         # ----  Board Game Frame  ---------------------------------
         self.boardWidth = self.boardHeight = (width * 50)
@@ -129,27 +132,38 @@ class UserInterface:
     def introMessages(self) -> None:
         """ introduction message to player
         post: return the message """
-
+        lineLen = 99 if self.os == "Windows" else 89
         # message to show player
-        message = ("Welcome To Minesweeper".rjust(60)
-                   + "\nTo Play:"
-                   + "\n** Left clicking a cell will show how many "
-                   + "mines are adjacent to that cell."
+        message = ("-" * lineLen + "\n"
+                +"Welcome To Minesweeper".rjust(lineLen - 10)
+                + "\n" + "-" * lineLen
 
-                   + "\n\n** Right clicking a cell will lock the cell "
-                   + "making the cell un-clickabe and displaying"
-                   + " an Red Flag to show the cell is locked. Decreasing "
-                   + "the amount of mines by 1.\n\t\t(Left Top Value in Game Window).\n"
+                + "\nTo Play:"
+                + "\n* Left-clicking a cell will show how many "
+                + "mines are adjacent to that cell."
 
-                   + "\n** Double Right click a cell to unlock. Removing the flag and increase mine count."
-                   + "\n** Click the smiley at anytime to reset the game."
-                   + "\n" + "-" * 99
+                + "\n* Right-clicking a cell will lock the cell "
+                + "making the cell un-clickable and displaying a "
+                + "Red Flag to show the cell is locked. Also decreasing "
+                + "the number of mines by 1." 
+                
+                +"\n* Mine count is kept in the box to the left of "
+                +"the smiley button."
+                
+                +"\n* Time lapsed is kept in the box to the right of " 
+                +"the smiley button."
 
-                   + "\nTo Win:"
-                   + "\n** User must find all mines by placing a flag on a cell "
-                   + "that they think holds a mine. If all cells are revealed "
-                   + "and all mines are found, then the player wins the game.\n"
-                   + "-->  Click Button below to Start Game  <--".rjust(65))
+                + "\n* Double Right-click a cell to unlock. It will remove the " 
+                +"placed flag and increase the mine count."
+                + "\n* Click the smiley at any time to reset the game."
+                
+                + "\n\nTo Win:"
+                + "\n* The player must find all mines by placing a flag on a "
+                + "cell that they think holds a mine. The player wins the game "
+                + "if all cells are revealed and all mines are found."
+                + "\n" + "-" * lineLen + "\n"
+                + "-->  Click the button below to start the game  <--".rjust(lineLen - 2)
+                + "\n" + "-" * lineLen)
 
         return message  # returns the intro message
 
@@ -200,7 +214,7 @@ class UserInterface:
     def drawLines(self) -> None:
         """creates harizonal and vertical line on the canvas"""
 
-        # ---  Creates the lines for the board   -------------------------------------
+        # ---  Creates the lines for the board   ----------------------
         # creates harizonal lines on self.board
         for x in range(0, self.boardWidth, 50):
             self.board.create_line(
@@ -246,55 +260,56 @@ class UserInterface:
                 row = 0
 
     def createCellBox(self) -> None:
+        '''aaaa '''
 
-        columnDone = 0  # keeps track of how many coulmns have been created
-        x1, x2 = 0, 50  # initial croods for creating cell box
-
-        while(columnDone != self.size):
-            y1, y2 = 0, 50
-            rowDone = 0
-
+        x1 = 25 # initial croods for creating cell box
+        for x in range(10):
+            y1 = 25
             # true if rows created isn't equal to size of board
-            while(rowDone != self.size):
+            for y in range(10):
                 # creates all the cell boxes
-                id = self.board.create_rectangle(
-                    x1, y1, x2, y2,
-                    fill='gray50',
-                    outline='gray17',
-                    width=2.5,
+                id = self.board.create_image(
+                    x1, y1,
+                    image=self.images[6],
                     tags="boxes")
 
                 # tags each box with adjacney value or mine if its a mine
                 self.board.addtag_withtag(
-                    f"{self.mineField[columnDone][rowDone]}", id)
+                    f"{self.mineField[x][y]}", id)
 
-                if self.mineField[columnDone][rowDone].isVisible():
+                if self.mineField[x][y].isVisible():
                     # tags each box not a non-mine as visible
                     self.board.addtag_withtag("mine", id)
 
                 # tags each cell box with its lock status at creation
                 self.board.addtag_withtag(
-                    f"{self.mineField[columnDone][rowDone].isLocked()}", id)
+                    f"{self.mineField[x][y].isLocked()}", id)
 
                 # center coordinates of each box
-                self.board.addtag_withtag(f"{x1 + 25},{y1 + 25}", id)
+                self.board.addtag_withtag(f"{x1},{y1}", id)
 
-                # moves bottom right points of square which makes up the box
-                y1 += 50  # y1 to next column point
-                y2 += 50  # y2 to next column point
-
-                rowDone += 1
-            # moves top left points of square which makes up the box to next point
+                y1 += 50 
             x1 += 50
-            x2 += 50
-
-            columnDone += 1
 
         # assigns first and last cell box on board
         self.firstBox = self.board.find_withtag("boxes")[0]
         self.lastBox = self.board.find_withtag("boxes")[-1]
 
-    def showCell(self, x : int , y : int, firstBox : tkinter, lastBox : tkinter) -> None:
+        self.createBounds() # creates the top & bottom bounds
+
+    def createBounds(self): 
+        topBound = self.firstBox
+        bottomBound = self.lastBox
+
+        for x in range(10):
+            self.topBound.append(topBound)
+            topBound += 10
+
+        for x in range(10):
+            self.bottomBound.append(bottomBound)
+            bottomBound -= 10
+
+    def showCell(self, x : int , y : int, firstBox : Canvas.create_rectangle, lastBox : Canvas.create_rectangle) -> None:
         """shows the cell with coordinates x and y
         pre: mouse x coords , y mouse coords
         post: deletes the cell box click by user"""
@@ -312,28 +327,50 @@ class UserInterface:
 
             # checks if cellbox user cliked is not in lockedList
             if boxx not in self.lockedList:
+                # assigns the cellbox click adjancey value to self.value
+                self.value.set(self.board.gettags(boxx)[1])
 
-                # assigns the cellbox click adjancey value to value
-                value = self.board.gettags(boxx)[1]
-
-                # sets self.value i.e currect value of cellbox clicked
-                self.value.set(value)
-
-                # removes clicked cell box from self.board (canvas)
-                self.board.delete(self.board.find_closest(x, y))
-
-                # delete all adjacent 0's
-
+                #recursively reveals cells
+                self.revealMore(boxx)
+        
         # resets infor frame button to default image
         self.resetButton.after(500, self.buttonImageToggle)
 
-    def lock(self, x : int, y : int, firstBox : tkinter, lastBox : tkinter) -> None:
+    def revealMore(self, boxx : id) -> None:
+        ''' recursively reveals neiborging cell that have 0 adjancecy 
+        and a line of adjacent cells'''
+
+        if boxx in self.board.find_withtag("boxes"):
+            cellValue = int(self.board.gettags(boxx)[1])
+            
+            if self.board.gettags(boxx)[-1] == "locked":
+                return
+
+            if cellValue == 0 and self.board.gettags(boxx)[-1] != "locked": 
+                self.board.delete(boxx) # reveals the cell
+                self.revealMore(boxx - 10) # check left
+                self.revealMore(boxx + 10) # check right
+
+                if boxx not in self.topBound:    
+                    self.revealMore(boxx - 1)  # check up
+                    self.revealMore(boxx - 11) # check upLeft
+                    self.revealMore(boxx + 9) # check upRight
+                
+                if boxx not in self.bottomBound:     
+                    self.revealMore(boxx + 1)  # check down
+                    self.revealMore(boxx - 9)  # check downLeft
+                    self.revealMore(boxx + 11)  # check downRight
+
+            if cellValue != 9: 
+                self.board.delete(boxx) # reveals the cell
+                return 
+
+    def lock(self, x : int, y : int, firstBox : Canvas.create_rectangle, lastBox : Canvas.create_rectangle) -> None:
         """ event handler for locked cell when right clicked
         pre: mouse x croods , mouse y croods
         post: lock the cell and place X in the box """
 
-        # allows for cell to be locked as long as the game hasn't ended
-        # if not self.gameEnd:
+        # allows for cell to be locked 
         cellID = self.board.find_closest(x, y)[0]
 
         if cellID >= firstBox and cellID <= lastBox:
@@ -354,6 +391,9 @@ class UserInterface:
                 self.lockedList.append(textID)
 
                 # self.lockedDict[f"{cellID}"] = textID
+                
+                # adds a lock tag to the cell 
+                self.board.addtag_withtag("locked", cellID)
 
                 # decrease self.mineMarked by 1
                 mineCount = int(self.currentMines.get())
@@ -365,11 +405,13 @@ class UserInterface:
         post: unlocks the cell and removes X  """
 
         # game hasn't ended so allow unlocking of cell
-        # if not self.gameEnd:
         cellID = self.board.find_closest(x, y)[0]
         if cellID in self.lockedList:
             self.board.delete(cellID)
             self.lockedList.remove(cellID)  # removes cell box
+
+            # removes the "locked" tag from cell
+            self.board.dtag(cellID, "locked")
 
             # increase mine count by 1
             newMineCount = str(int(self.currentMines.get()) + 1)
@@ -390,7 +432,8 @@ class UserInterface:
 
         # deletes all cells that are mines
         for id in self.board.find_withtag("mine"):
-            self.board.delete(id)
+            if self.board.gettags(id)[-1] != "locked":
+                self.board.delete(id)
 
     def startTimer(self) -> None:
         ''' starts game timer when user has clicked a cell or placed a flag'''
@@ -408,7 +451,7 @@ class UserInterface:
         if self.after_id != None:
             self.master.after_cancel(self.after_id)
     
-    def restoreGame(self, event: EventType, image: tkinter.PhotoImage) -> None:
+    def restoreGame(self, event: EventType, image: PhotoImage) -> None:
         """ handles bar button being clicked
         pre: "<Button-1>", the image to display
         post: restarts game after"""
@@ -423,6 +466,7 @@ class UserInterface:
         self.restartGame()
 
     def restartGame(self) -> None: 
+        '''Restarts game, resets all values to intital state and recreated the board'''
         self.board.destroy()
         self.timer.set(0)
         self.value.set(None)
@@ -447,6 +491,8 @@ class UserInterface:
         self.printBoard() # for testing 
 
     def cellActive(self) -> None:  
+        '''Activates the  mouse click binding depending on operating system.'''
+
         #  left click to reveal cell
         self.board.bind(
             "<Button-1>",
@@ -475,6 +521,7 @@ class UserInterface:
                 lambda event: self.unlock(event.x, event.y)) 
     
     def cellDeactivate(self) -> None:
+        ''' deactivates all mouse click bindings'''
 
         self.board.unbind("<Button-1>")
         self.board.unbind("<Button-2>")
