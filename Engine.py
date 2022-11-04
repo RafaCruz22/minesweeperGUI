@@ -1,6 +1,6 @@
 from Cell import *
 from UserInterface import *
-from random import randint
+from random import randrange
 
 
 class Engine():
@@ -28,13 +28,13 @@ class Engine():
             height=size)
 
     def placeMine(self, size: int) -> None:
-        # generate the mines, put them into random places
+        # puts mine at puesdo random places
         counter = 0
         while counter < self.numOfMines:
-
-            x = randint(0, size-1)
-            y = randint(0, size-1)
             
+            x = randrange(0, size-1)
+            y = randrange(0, size-1)
+
             if self.field[x][y] == '0':
                 self.field[x][y].putMine()  # put the mine
                 counter += 1                # increase mines count
@@ -85,16 +85,15 @@ class Engine():
             if self.UI.gameEnd:
                 self.resetMinesandCells()
 
-            mine = self.playRound()          # play a round, get its result
+            mine = self.playRound() # play a round, get its result
                 
             markedMines = abs((int(self.UI.currentMines.get()) - self.numOfMines))
 
             if mine or markedMines == self.numOfMines:
                 self.UI.killTimer()
                     
-                # disable clicking on the board.
-                self.UI.cellDeactivate()
-                self.UI.revealAllMines()  # reveal all mine cells
+                self.UI.cellDeactivate()    # disable clicking on the board.
+                self.UI.revealAllMines()    # reveal all mine cells
 
     def playRound(self) -> bool:
         """ plays one round
@@ -103,7 +102,6 @@ class Engine():
 
     def resetMinesandCells(self) -> None:
         try:
-            # self.UI.board.unbind("<Button-1>")
             self.field.clear()
             self.UI.mineField.clear()
             self.field = self.UI.mineField = [[Cell() for j in range(self.size)] for i in range(self.size)]
