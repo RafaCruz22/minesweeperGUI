@@ -305,7 +305,7 @@ class UserInterface:
             upperBound += 10
             lowerBound -= 10
 
-    def showCell(self, x : int , y : int, firstBox : Canvas.create_rectangle, lastBox : Canvas.create_rectangle) -> None:
+    def revealCell(self, x : int , y : int, firstBox : Canvas.create_rectangle, lastBox : Canvas.create_rectangle) -> None:
         """shows the cell with coordinates x and y
         pre: mouse x coords , y mouse coords
         post: deletes the cell box click by user"""
@@ -500,7 +500,7 @@ class UserInterface:
         #  left click to reveal cell
         self.board.bind(
             "<Button-1>",
-            lambda event: self.showCell(event.x, event.y, self.firstBox, self.lastBox))
+            lambda event: self.revealCell(event.x, event.y, self.firstBox, self.lastBox))
 
         if self.os == "Darwin":
             # right click to place flag on cell
