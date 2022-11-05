@@ -2,7 +2,6 @@ from tkinter import *
 import platform
 
 
-
 class UserInterface:
     """ handles all the graphics for minesweeper"""
 
@@ -58,21 +57,19 @@ class UserInterface:
         self.boardWidth = self.boardHeight = (width * 50)
         self.boardFrame = Frame(
             self.mainFrame,
-            width=self.boardWidth,
-            height=self.boardHeight,
             relief=RIDGE,
             borderwidth=6,
             bg='gray30')
 
-        self.boardFrame.grid(padx=10, pady=10)
-
+        self.boardFrame.grid(padx=5, pady=5)
+        
         # ----  Create A Canvas For The Board  ---------------------
         self.board = Canvas(
             self.boardFrame,
-            width=self.boardWidth,
-            height=self.boardHeight)
+            width=self.boardWidth - 3,
+            height=self.boardHeight - 3)
 
-        self.board.grid()
+        self.board.grid(padx=5, pady=5)
 
         # ----  Variable To Return To Game Function  ----------------
         self.value = StringVar(self.master)  # adjanacey value of box clicked
@@ -213,54 +210,54 @@ class UserInterface:
 
     def drawLines(self) -> None:
         """creates harizonal and vertical line on the canvas"""
-
+        
         # ---  Creates the lines for the board   ----------------------
+        # creates top, bottom, left, and right board lines
+        boarderLines = [[0,0,500,0], [0,500,500,500], [0,0,0,500], [500,0,500,500]]
+        for coords in boarderLines:
+            x1 , y1 = coords[0] , coords[1]
+            x2 , y2 = coords[2] , coords[3]
+            self.board.create_line(x1, y1, x2, y2, fill='black', width=10)
+
         # creates harizonal lines on self.board
-        for x in range(0, self.boardWidth, 50):
-            self.board.create_line(
-                x, 0, x, self.boardHeight, fill='black', width=2)
+        for x in range(0, self.boardWidth,50):
+            self.board.create_line(x, 0, x, self.boardHeight, fill='black', width=2)
 
         # creates vertical line on self.board
-        for y in range(0, self.boardHeight, 50):
-            self.board.create_line(0, y, self.boardWidth,
-                                   y, fill='black', width=2)
+        for y in range(0, self.boardHeight,50):
+            self.board.create_line(0, y, self.boardWidth, y, fill='black', width=1)
 
     def placeAdjacency(self) -> None:
         """ Places adjacency values on the canvas """
 
         # places adjacency values in center of check cell box
-        row = 0  # cell box row
-        column = 0  # cell box column
+        row, column = 0 , 0 # cell box row , column
         for rowX in range(25, self.boardWidth, 50):  # row to place adjacency value
             # column to place adjacency value
             for columnY in range(25, self.boardWidth, 50):
 
-                # retrives value at row = x ( from 25 to (self.height - 50))
-                # column = y (from 25 to (self.height - 50))
                 mineOnField = str(self.mineField[row][column])
 
                 # creates the text objects and places them in center of each future box
                 if mineOnField == '9':
                     self.mineField[row][column].visible = True
 
-                    self.board.create_image(
-                        rowX, columnY, image=self.images[5])
+                    self.board.create_image(rowX, columnY, image=self.images[5])
 
-                else:
-                    if mineOnField != "0":
-                        self.board.create_text(rowX, columnY, text=mineOnField, font=(
-                            "New Time Roman", 20, "italic"))
+                elif mineOnField != "0":
+                    self.board.create_text(rowX, columnY, text=mineOnField, font=(
+                        "Helvetica", 20, "italic"))
 
                 column += 1
-                if column == self.size:
-                    column = 0
+                if column == self.size: column = 0
 
             row += 1
-            if row == self.size:
-                row = 0
+            if row == self.size: row = 0
 
     def createCellBox(self) -> None:
-        '''aaaa '''
+        ''' Creates the cells on the board and tags each cell with 
+        adjacency values, if its a mine, if the cell is clocked, 
+        and it's coordination '''
 
         x1 = 25 # initial croods for creating cell box
         for x in range(10):
@@ -297,17 +294,16 @@ class UserInterface:
 
         self.createBounds() # creates the top & bottom bounds
 
-    def createBounds(self): 
-        topBound = self.firstBox
-        bottomBound = self.lastBox
+    def createBounds(self) -> None: 
+        ''' creates the upper and lower bounder for revealing cells recursively '''
+        upperBound = self.firstBox
+        lowerBound = self.lastBox
 
         for x in range(10):
-            self.topBound.append(topBound)
-            topBound += 10
-
-        for x in range(10):
-            self.bottomBound.append(bottomBound)
-            bottomBound -= 10
+            self.topBound.append(upperBound)
+            self.bottomBound.append(lowerBound)
+            upperBound += 10
+            lowerBound -= 10
 
     def showCell(self, x : int , y : int, firstBox : Canvas.create_rectangle, lastBox : Canvas.create_rectangle) -> None:
         """shows the cell with coordinates x and y
@@ -330,39 +326,40 @@ class UserInterface:
                 # assigns the cellbox click adjancey value to self.value
                 self.value.set(self.board.gettags(boxx)[1])
 
-                #recursively reveals cells
                 self.revealMore(boxx)
         
-        # resets infor frame button to default image
-        self.resetButton.after(500, self.buttonImageToggle)
+        if self.value.get() != '9':
+            # resets infor frame button to default image
+            self.resetButton.after(500, self.buttonImageDefault)
 
-    def revealMore(self, boxx : id) -> None:
+    def revealMore(self, cellBox : id) -> None:
         ''' recursively reveals neiborging cell that have 0 adjancecy 
-        and a line of adjacent cells'''
+        along with a line of adjacent cells'''
 
-        if boxx in self.board.find_withtag("boxes"):
-            cellValue = int(self.board.gettags(boxx)[1])
+        # assures cellBox exist
+        if cellBox in self.board.find_withtag("boxes"):
+            cellValue = int(self.board.gettags(cellBox)[1])
             
-            if self.board.gettags(boxx)[-1] == "locked":
+            if self.board.gettags(cellBox)[-1] == "locked":
                 return
 
-            if cellValue == 0 and self.board.gettags(boxx)[-1] != "locked": 
-                self.board.delete(boxx) # reveals the cell
-                self.revealMore(boxx - 10) # check left
-                self.revealMore(boxx + 10) # check right
+            if cellValue == 0 and self.board.gettags(cellBox)[-1] != "locked": 
+                self.board.delete(cellBox) # reveals the cell
+                self.revealMore(cellBox - 10) # check left
+                self.revealMore(cellBox + 10) # check right
 
-                if boxx not in self.topBound:    
-                    self.revealMore(boxx - 1)  # check up
-                    self.revealMore(boxx - 11) # check upLeft
-                    self.revealMore(boxx + 9) # check upRight
+                if cellBox not in self.topBound:    
+                    self.revealMore(cellBox - 1)  # check up
+                    self.revealMore(cellBox - 11) # check upLeft
+                    self.revealMore(cellBox + 9) # check upRight
                 
-                if boxx not in self.bottomBound:     
-                    self.revealMore(boxx + 1)  # check down
-                    self.revealMore(boxx - 9)  # check downLeft
-                    self.revealMore(boxx + 11)  # check downRight
+                if cellBox not in self.bottomBound:     
+                    self.revealMore(cellBox + 1)  # check down
+                    self.revealMore(cellBox - 9)  # check downLeft
+                    self.revealMore(cellBox + 11)  # check downRight
 
             if cellValue != 9: 
-                self.board.delete(boxx) # reveals the cell
+                self.board.delete(cellBox) # reveals the cell
                 return 
 
     def lock(self, x : int, y : int, firstBox : Canvas.create_rectangle, lastBox : Canvas.create_rectangle) -> None:
@@ -370,31 +367,28 @@ class UserInterface:
         pre: mouse x croods , mouse y croods
         post: lock the cell and place X in the box """
 
-        # allows for cell to be locked 
+        # retrieves the cell ID that user has clicked on
         cellID = self.board.find_closest(x, y)[0]
-
-        if cellID >= firstBox and cellID <= lastBox:
-
-            # checks if clicked id is in list of locked boxes
+        
+        if cellID >= firstBox <= lastBox:
             if cellID not in self.lockedList:
-                # gets and splits the croods which is taged on each cell
-                cellCoordinatesX, cellCoordinatesY = self.board.gettags(
-                    cellID)[-2].split(",")
+                # retrieve and splits the croods which is taged on each cell
+                coordX, coordY = self.board.gettags(cellID)[3].split(",")
 
-                # places a flag on cell user wants locked
-                textID = self.board.create_image(
-                    cellCoordinatesX,
-                    cellCoordinatesY,
-                    image=self.images[4])
+                # places a flag on the cell the user clicked to be locked
+                flagID = self.board.create_image(coordX, coordY,
+                    image=self.images[4],
+                    tags=cellID)
 
-                # cell not in locked list so append to list
-                self.lockedList.append(textID)
+                # cell not in locked list; append to list
+                self.lockedList.append(flagID)
 
                 # self.lockedDict[f"{cellID}"] = textID
                 
                 # adds a lock tag to the cell 
+                self.board.addtag_withtag(f"{flagID}", cellID)
                 self.board.addtag_withtag("locked", cellID)
-
+                
                 # decrease self.mineMarked by 1
                 mineCount = int(self.currentMines.get())
                 self.currentMines.set(mineCount - 1)
@@ -405,13 +399,17 @@ class UserInterface:
         post: unlocks the cell and removes X  """
 
         # game hasn't ended so allow unlocking of cell
-        cellID = self.board.find_closest(x, y)[0]
-        if cellID in self.lockedList:
-            self.board.delete(cellID)
-            self.lockedList.remove(cellID)  # removes cell box
+        flagID = self.board.find_closest(x, y)[0]
+
+        if flagID in self.lockedList:
+            cellID = self.board.gettags(flagID)[-2]
+
+            self.board.delete(flagID)   
+            self.lockedList.remove(flagID)  # removes cell box
 
             # removes the "locked" tag from cell
             self.board.dtag(cellID, "locked")
+            self.board.dtag(cellID, f"{flagID}")
 
             # increase mine count by 1
             newMineCount = str(int(self.currentMines.get()) + 1)
@@ -424,8 +422,13 @@ class UserInterface:
         self.board.wait_variable(self.value)
         return self.value.get()  # return True if mine, False otherwise
 
-    def buttonImageToggle(self):
+    def buttonImageDefault(self):
+        ''' sets smiley button to it's default image'''
         self.resetButton["image"] = self.images[0]
+
+    def buttonImageLost(self): 
+        ''' sets smiley button to a losing image'''
+        self.resetButton["image"] = self.images[3]
 
     def revealAllMines(self) -> None:
         '''Reveals all mines on the board'''
@@ -473,7 +476,7 @@ class UserInterface:
 
         # holds reference to .after() method
         self.after_id = None
-        self.buttonImageToggle()
+        self.buttonImageDefault()
         
         # number of mines marked initialized to numOfMines
         self.currentMines.set(self.mines)
@@ -486,6 +489,7 @@ class UserInterface:
             height=self.boardHeight)
         
         self.board.grid()
+
         self.createBoard()
         self.cellActive()
         self.printBoard() # for testing 
@@ -537,4 +541,5 @@ class UserInterface:
             for j in range(0, self.size):
                 row += str(self.mineField[j][i]) + '  '
 
-            print("\t", row)
+            print("   ", row)
+        print()
