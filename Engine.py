@@ -17,6 +17,7 @@ class Engine():
 
         self.size = size
         self.numOfMines = NumOfMines
+        self.mine = None
 
         self.placeMine(size)  # place mine on board
 
@@ -85,15 +86,39 @@ class Engine():
             if self.UI.gameEnd:
                 self.resetMinesandCells()
 
-            mine = self.playRound() # play a round, get its result
-                
-            markedMines = abs((int(self.UI.currentMines.get()) - self.numOfMines))
-
-            if mine or markedMines == self.numOfMines:
+            winner = self.checkWin()
+            
+            if self.mine or winner: # or mines == lockedTag:
                 self.UI.killTimer()
-                    
                 self.UI.cellDeactivate()    # disable clicking on the board.
                 self.UI.revealAllMines()    # reveal all mine cells
+
+                if self.mine is True:
+                    self.UI.buttonImageLost()
+                else:
+                    self.UI.buttonImageWinner()
+
+                self.UI.master.wait_window(self.UI.board)
+
+            # markedMines = abs((int(self.UI.currentMines.get()) - self.numOfMines))
+            # if len(self.UI.board.find_withtag("boxes")) >= 11:
+            self.mine = self.playRound() # play a round, get its result
+
+
+    def checkWin(self): 
+        mines = self.UI.board.find_withtag("mine")
+        cells = self.UI.board.find_withtag("boxes")
+        lockedTag = self.UI.lockedDict.values()
+
+        if len(lockedTag) == 10 and len(cells) == 10:
+            for mine in mines: 
+                if mine not in lockedTag:
+                    return False
+            
+            return True
+        
+        return False
+
 
     def playRound(self) -> bool:
         """ plays one round
