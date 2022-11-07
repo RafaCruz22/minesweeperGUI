@@ -51,7 +51,8 @@ class UserInterface:
                        PhotoImage(file="./assets/smile4.png"),
                        PhotoImage(file="./assets/flag.png"),
                        PhotoImage(file="./assets/mine.png"),
-                       PhotoImage(file="./assets/box.png")]
+                       PhotoImage(file="./assets/box.png"),
+                        PhotoImage(file="./assets/winner.png")]
 
         # ----  Board Game Frame  ---------------------------------
         self.boardWidth = self.boardHeight = (width * 50)
@@ -80,6 +81,8 @@ class UserInterface:
 
         # list of locked cell ids
         self.lockedList = []
+        self.lockedDict = dict()
+        self.mineList = []
 
         # keeps track of seconds passed
         self.timer = StringVar(self.barFrame)
@@ -277,6 +280,7 @@ class UserInterface:
                 if self.mineField[x][y].isVisible():
                     # tags each box not a non-mine as visible
                     self.board.addtag_withtag("mine", id)
+                    self.mineList.append(id)
 
                 # tags each cell box with its lock status at creation
                 self.board.addtag_withtag(
@@ -370,10 +374,12 @@ class UserInterface:
         # retrieves the cell ID that user has clicked on
         cellID = self.board.find_closest(x, y)[0]
         
-        if cellID >= firstBox <= lastBox:
+        # if cellID >= firstBox <= lastBox: # firstbox <= cellID >= lastBox:
+        if cellID >= firstBox and cellID <= lastBox:
             if cellID not in self.lockedList:
+                # print(self.board.gettags(cellID))
                 # retrieve and splits the croods which is taged on each cell
-                coordX, coordY = self.board.gettags(cellID)[3].split(",")
+                coordX, coordY = self.board.gettags(cellID)[-2].split(",")
 
                 # places a flag on the cell the user clicked to be locked
                 flagID = self.board.create_image(coordX, coordY,
@@ -383,8 +389,10 @@ class UserInterface:
                 # cell not in locked list; append to list
                 self.lockedList.append(flagID)
 
-                # self.lockedDict[f"{cellID}"] = textID
-                
+                self.lockedDict[f"{flagID}"] = cellID
+                # print("Cell ID:", cellID, "in lock method")
+                # print("Flag ID:", flagID, "in lock method")
+
                 # adds a lock tag to the cell 
                 self.board.addtag_withtag(f"{flagID}", cellID)
                 self.board.addtag_withtag("locked", cellID)
@@ -429,6 +437,10 @@ class UserInterface:
     def buttonImageLost(self): 
         ''' sets smiley button to a losing image'''
         self.resetButton["image"] = self.images[3]
+
+    def buttonImageWinner(self): 
+        ''' sets smiley button to a winning image'''
+        self.resetButton["image"] = self.images[7]
 
     def revealAllMines(self) -> None:
         '''Reveals all mines on the board'''
