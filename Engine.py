@@ -1,6 +1,8 @@
+import sys
 from Cell import *
 from UserInterface import *
 from random import randrange
+
 
 
 class Engine():
@@ -27,6 +29,8 @@ class Engine():
             self.numOfMines,
             width=size,
             height=size)
+
+        
 
     def placeMine(self, size: int) -> None:
         # puts mine at puesdo random places
@@ -100,9 +104,8 @@ class Engine():
                     self.UI.buttonImageWinner()
 
                 self.UI.master.wait_window(self.UI.board)
-
+            
             self.mine = self.playRound() # play a round, get its result
-
 
     def checkWin(self): 
         mines = self.UI.board.find_withtag("mine")
@@ -121,6 +124,7 @@ class Engine():
     def playRound(self) -> bool:
         """ plays one round
         post: returns True if user has clicked on mine, False otherwise"""
+        self.UI.master.protocol("WM_DELETE_WINDOW", self.closeWin)
         return True if self.UI.cellValue() == '9' else False
 
     def resetMinesandCells(self) -> None:
@@ -133,3 +137,8 @@ class Engine():
     
         except:
             print('\n--> reset not successful \nSomething went wrong')
+
+    def closeWin(self):
+        print("In Close win")
+        self.UI.master.destroy()
+        sys.exit()
