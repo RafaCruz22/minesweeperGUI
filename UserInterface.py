@@ -1,7 +1,5 @@
 from tkinter import *
 import platform
-from PIL import Image, ImageTk
-
 
 class UserInterface:
     """ handles all the graphics for minesweeper"""
@@ -496,13 +494,13 @@ class UserInterface:
         self.currentMines.set(self.mines)
 
         self.lockedList.clear()  # list of locked cell ids
-
+        
         self.board = Canvas(
             self.boardFrame,
-            width=self.boardWidth,
-            height=self.boardHeight)
-        
-        self.board.grid()
+            width=self.boardWidth - 3,
+            height=self.boardHeight - 3)
+
+        self.board.grid(padx=5, pady=5)
 
         self.createBoard()
         self.cellActive()
