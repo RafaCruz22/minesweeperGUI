@@ -1,5 +1,6 @@
 from tkinter import *
 import platform
+from PIL import Image, ImageTk
 
 
 class UserInterface:
@@ -45,6 +46,7 @@ class UserInterface:
         self.resetButton = Button(self.barFrame)
 
         # -------  Images  ----------------------------------------
+
         self.images = [PhotoImage(file="./assets/smile1.png"),
                        PhotoImage(file="./assets/smile2.png"),
                        PhotoImage(file="./assets/smile3.png"),
@@ -52,7 +54,7 @@ class UserInterface:
                        PhotoImage(file="./assets/flag.png"),
                        PhotoImage(file="./assets/mine.png"),
                        PhotoImage(file="./assets/box.png"),
-                        PhotoImage(file="./assets/winner.png")]
+                       PhotoImage(file="./assets/winner.png")]
 
         # ----  Board Game Frame  ---------------------------------
         self.boardWidth = self.boardHeight = (width * 50)

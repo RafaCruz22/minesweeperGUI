@@ -95,13 +95,12 @@ class Engine():
 
                 if self.mine is True:
                     self.UI.buttonImageLost()
-                else:
+                
+                if winner:
                     self.UI.buttonImageWinner()
 
                 self.UI.master.wait_window(self.UI.board)
 
-            # markedMines = abs((int(self.UI.currentMines.get()) - self.numOfMines))
-            # if len(self.UI.board.find_withtag("boxes")) >= 11:
             self.mine = self.playRound() # play a round, get its result
 
 
@@ -118,7 +117,6 @@ class Engine():
             return True
         
         return False
-
 
     def playRound(self) -> bool:
         """ plays one round
